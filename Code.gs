@@ -208,7 +208,7 @@ function createOrUpdateCalendarEventFromContactEvent(calendarId, contactEvent) {
     recurrence: [(contactEvent.date.month === 2 && contactEvent.date.day === 29)
       ? "RRULE:FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=-1" // Exception for Feb 29th!
       : "RRULE:FREQ=YEARLY"],
-    description: `<b>Google Contacts:</b> <a href="https://contacts.google.com/person/${contactEvent.contact.resourceName.replace(/^people\//,'')}">${contactEvent.contact.name}</a>`,
+    description: `<a href="https://contacts.google.com/person/${contactEvent.contact.resourceName.replace(/^people\//,'')}"><b>Google Contacts</b></a>`,
     transparency: "transparent", // The event does not block time on the calendar.
     visibility: "private",
     extendedProperties: {
