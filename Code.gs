@@ -85,6 +85,7 @@ function getCalendarContactsEvents({ calendarId, privateExtendedProperties }) {
         source: 'contacts',
       }, privateExtendedProperties ?? {}))
       .map(([key, value]) => `${key}=${value}`),
+    maxResults:2500, // TODO implement page iteration
   }).items;
 }
 
