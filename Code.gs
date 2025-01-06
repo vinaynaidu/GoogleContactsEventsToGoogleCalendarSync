@@ -12,7 +12,7 @@
 //.  4) Click "Save" Button
 
 // # INSTRUCTION to remove all synced events...
-// 1) Select "run_semoveEvents" in the dropdown menu above, then click "Run"  
+// 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"  
 
 const config = {
   // If undefined all contacts are synced
@@ -66,7 +66,7 @@ function run_syncEvents() {
   }
 }
 
-function run_semoveEvents() {
+function run_removeEvents() {
   const events = getCalendarContactsEvents({
     calendarId: config.calendarId,
   });
@@ -190,15 +190,15 @@ function getContactEvents(connection) {
   return events;
 
   function buildContactEventId({contact, type, date}) {
-    const value = `${contact.resourceName}-${type}-${date}`;
+    const value = `${contact.resourceName}-${type}-${date.year ?? '0000'}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
     const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, value);
     return Utilities.base64EncodeWebSafe(digest).replace(/=+$/,'')
   }
 }
 
 function createOrUpdateCalendarEventFromContactEvent(calendarId, contactEvent) {
-  const now = new Date();
-  const contactEventDate = new Date(`${contactEvent.date.year ?? now.getFullYear()}-${String(contactEvent.date.month).padStart(2, '0')}-${String(contactEvent.date.day).padStart(2, '0')}`);
+  // TODO handle no year, use contact creation date
+  const contactEventDate = new Date(`${contactEvent.date.year ?? 1970}-${String(contactEvent.date.month).padStart(2, '0')}-${String(contactEvent.date.day).padStart(2, '0')}`);
 
   const calendarEvent = {
     eventType: 'default',
@@ -258,5 +258,3 @@ function nextDay(date) {
   nextDayDate.setDate(date.getDate() + 1);
   return nextDayDate;
 }
-
-
