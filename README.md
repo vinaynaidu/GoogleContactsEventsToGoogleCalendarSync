@@ -1,3 +1,11 @@
-# GoogleContactsEventsToGoogleCalendarSync
+# Google Contacts Events To Google Calendar Sync
 
-[Google Apps Script Project](https://script.google.com/d/10YfPVZXxCb25mSuyRa58_a-cV_6xMBnCwX9WZZdq02IB-EQkpJ6cbiQ7/edit?usp=sharing)
+A [Google Scripts](https://script.google.com) sync Google Contacts events to any Google Calendar
+
+### Installation
+* Create a blank project on https://script.google.com/
+* Copy content of [`Code.gs`](Code.gs) into your new project
+* Add `People API` service and `Calendar API` service
+* Follow the instruction at the top of [`Code.gs`](Code.gs)
+
+
