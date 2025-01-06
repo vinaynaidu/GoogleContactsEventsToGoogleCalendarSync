@@ -80,24 +80,33 @@ function run_removeEvents() {
 // --- main methods END ---
 
 function getCalendarContactsEvents({ calendarId, privateExtendedProperties }) {
-  return Calendar.Events.list(calendarId, {
-    privateExtendedProperty: Object.entries(Object.assign({
-        source: 'contacts',
-      }, privateExtendedProperties ?? {}))
-      .map(([key, value]) => `${key}=${value}`),
-    maxResults:2500, // TODO implement page iteration
-  }).items;
+  const result = [];
+
+  let nextPageToken = null;
+  do {
+    const response = Calendar.Events.list(calendarId, {
+      privateExtendedProperty: Object.entries(Object.assign({
+          source: 'contacts',
+        }, privateExtendedProperties ?? {}))
+        .map(([key, value]) => `${key}=${value}`),
+      pageToken: nextPageToken,
+    })
+
+    nextPageToken = response.nextPageToken;
+
+    result.push(...response.items);
+  } while (nextPageToken);
+
+  return result;
 }
 
 function getContactsConections({ labelId }) {
   const result = [];
 
-  const pageSize = 100;
   let nextPageToken = null;
   do {
     const response = People.People.Connections.list("people/me", {
       personFields: "names,birthdays,events,memberships",
-      pageSize,
       pageToken: nextPageToken,
     });
     nextPageToken = response.nextPageToken;
