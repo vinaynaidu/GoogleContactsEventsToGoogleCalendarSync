@@ -34,7 +34,7 @@ const Config = {
     // If set only contacts with that label are synced
     //   To get the contactsLabelId...
     //   - Open https://contacts.google.com/
-    //.  - Click on any contact label on the left pannel,
+    //   - Click on any contact label on the left pannel,
     //     the last part of the url address is the contactsLabelId (https://contacts.google.com/label/[contactsLabelId]?...)
     labelId: "4b5ff75108c7c3d6",
     // Only those contact event types are synced. Add custom labels if needed.
@@ -47,7 +47,7 @@ const Config = {
   calendar: {
     // Target calendar for contact events. Set to 'primary' for the default calendar.
     //   To get the calendarId for a calendar...
-    //.  - Open https://calendar.google.com/
+    //   - Open https://calendar.google.com/
     //   - Hover over any of your calenders you have write premissions
     //   - Click on the 3 dot menu and then click on "Settings and sharing"
     //   - Sroll down to "Integrate calendar" > "Calendar ID"
