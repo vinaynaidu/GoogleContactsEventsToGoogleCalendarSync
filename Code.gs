@@ -35,7 +35,7 @@ const Config = {
     //   - Open https://contacts.google.com/
     //   - Click on any contact label on the left pannel,
     //     the last part of the url address is the contactsLabelId (https://contacts.google.com/label/[contactsLabelId]?...)
-    labelId: "4b5ff75108c7c3d6",
+    labelId: "CHANGE_ME",
     // Only those contact event types are synced. Add custom labels if needed.
     annualEventTypes: [
       ContactsEventLocalization.birthday,
@@ -50,7 +50,7 @@ const Config = {
     //   - Hover over any of your calenders you have write premissions
     //   - Click on the 3 dot menu and then click on "Settings and sharing"
     //   - Sroll down to "Integrate calendar" > "Calendar ID"
-    id: "f55644be868c6a4dc73f6d53ac9ba94b6543f59431bbd25e78e8f66c982170ec@group.calendar.google.com",
+    id: "CHANGE_ME@group.calendar.google.com",
     eventSummaryPrefix: "⌘ " + " ", // "⌘  ", "❖  ", "✱  "    ' ' <= Thin Space (U+2009),
   },
 };
