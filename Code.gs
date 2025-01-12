@@ -1,6 +1,8 @@
+// SOURCE: https://github.com/qoomon/GoogleContactsEventsToGoogleCalendarSync
+
 // # INSTRUCTION to sync birthdays and special events from your Google Contacts into any Google Calendar...
 // 1) Copy of this project
-// 2) Adjust the "config" object below before you proceed, click "Save project to Drive" above afterwards
+// 2) Adjust the "const Config" object and the "const ContactsEventLocalization" function below before you proceed, click "Save project to Drive" above afterwards
 // 3) Run this script for the first time...
 //   1) Select "run_syncEvents" in the dropdown menu above, then click "Run"
 //.  2) Click 'Advanced' during warnings to proceed and grant permissions to this script to access your contacts and calanders.
@@ -12,54 +14,78 @@
 //.  4) Click "Save" Button
 
 // # INSTRUCTION to remove all synced events...
-// 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"  
+// 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
 
-const config = {
-  // If undefined all contacts are synced
-  // If set only contacts with that label are synced
-  //   To get the contactLabelId...
-  //   - Open https://contacts.google.com/ 
-  //.  - Click on any contact label on the left pannel,
-  //     the last part of the url address is the contactLabelId (https://contacts.google.com/label/[contactLabelId]?...)
-  contactLabelId: undefined,
-  // Only those contact event types are synced. Add Custom ones if needed.
-  contactAnnualEventTypes: ['Birthday', 'Anniversary'],
+const ContactsEventLocalization = (() => {
+  const en = { birthday: 'Birthday', anniversary: 'Anniversary' };
+  switch (Session.getActiveUserLocale()) {
+    case 'en': return en;
+    case 'de': return { birthday: 'Geburtstag', anniversary: 'Jahrestag' };
+    default:
+      throw new Error(`Unsupported user locale '${Session.getActiveUserLocale()}'.` +
+        `\nAdd \`case '${Session.getActiveUserLocale()}': return {...};\` to \`const ContactsEventLocalization\` function.`);
+  }
+})();
 
-  // Target calendar for contact events. Set to 'primary' for the default calendar.
-  //   To get the calendarId for a calendar...
-  //.  - Open https://calendar.google.com/
-  //   - Hover over any of your calenders you have write premissions
-  //   - Click on the 3 dot menu and then click on "Settings and sharing"
-  //   - Sroll down to "Integrate calendar" > "Calendar ID"
-  calendarId: "primary",
+const Config = {
+  // --- Google Contacts ---
+  contacts: {
+    // If undefined all contacts are synced
+    // If set only contacts with that label are synced
+    //   To get the contactsLabelId...
+    //   - Open https://contacts.google.com/
+    //.  - Click on any contact label on the left pannel,
+    //     the last part of the url address is the contactsLabelId (https://contacts.google.com/label/[contactsLabelId]?...)
+    labelId: "4b5ff75108c7c3d6",
+    // Only those contact event types are synced. Add custom labels if needed.
+    annualEventTypes: [
+      ContactsEventLocalization.birthday,
+      ContactsEventLocalization.anniversary,
+    ],
+  },
+  // --- Google Calendar ---
+  calendar: {
+    // Target calendar for contact events. Set to 'primary' for the default calendar.
+    //   To get the calendarId for a calendar...
+    //.  - Open https://calendar.google.com/
+    //   - Hover over any of your calenders you have write premissions
+    //   - Click on the 3 dot menu and then click on "Settings and sharing"
+    //   - Sroll down to "Integrate calendar" > "Calendar ID"
+    id: "f55644be868c6a4dc73f6d53ac9ba94b6543f59431bbd25e78e8f66c982170ec@group.calendar.google.com",
+    eventSummaryPrefix: "⌘ " + " ", // "⌘  ", "❖  ", "✱  "    ' ' <= Thin Space (U+2009),
+  },
 };
 
 // --- main methods START ---
 
+function run_debug() {
+  console.log('UserLocale:', Session.getActiveUserLocale());
+}
+
 function run_syncEvents() {
   try {
     const contactsEvents = getContactsEvents({
-      types: config.contactAnnualEventTypes,
-      labelId: config.contactLabelId,
+      types: Config.contacts.annualEventTypes,
+      labelId: Config.contacts.labelId,
     });
-    console.info("contactsEvents: " + contactsEvents.length);
+    console.info("Contacts events count: " + contactsEvents.length);
 
     const calendarContactsEvents = getCalendarContactsEvents({
-      calendarId: config.calendarId,
+      calendarId: Config.calendar.id,
     });
-    console.info("calendarContactsEvents: " + calendarContactsEvents.length);
+    console.info("Calendar Contact events count: " + calendarContactsEvents.length);
 
     // --- remove legacy calendar events ---
     const contactsEventIdSet = new Set(contactsEvents.map((event) => event.id));
     const calendarContactsEventsToDelete = calendarContactsEvents.filter((event) => !contactsEventIdSet.has(event.extendedProperties.private.contactEventId));
-    console.info("calendarContactsEventsToDelete: " + calendarContactsEventsToDelete.length);
+    console.info("Calendar Contact events to delete: " + calendarContactsEventsToDelete.length);
     calendarContactsEventsToDelete.forEach((calendarEvent) => {
-      removeCalendarEvent(config.calendarId, calendarEvent);
+      removeCalendarEvent(Config.calendar.id, calendarEvent);
     });
 
     // --- create or update calendar events ---
     contactsEvents.forEach((contactEvent) => {
-      createOrUpdateCalendarEventFromContactEvent(config.calendarId, contactEvent);
+      createOrUpdateCalendarEventFromContactEvent(Config.calendar.id, contactEvent);
     });
   } catch (error) {
     console.error("ERROR", error.stack);
@@ -68,12 +94,12 @@ function run_syncEvents() {
 
 function run_removeEvents() {
   const events = getCalendarContactsEvents({
-    calendarId: config.calendarId,
+    calendarId: Config.calendar.id,
   });
   console.info("events: ", events.length);
 
   events.forEach((event) => {
-    removeCalendarEvent(config.calendarId, event);
+    removeCalendarEvent(Config.calendar.id, event);
   });
 }
 
@@ -97,7 +123,8 @@ function getCalendarContactsEvents({ calendarId, privateExtendedProperties }) {
     result.push(...response.items);
   } while (nextPageToken);
 
-  return result;
+  return result
+    .filter((item) => item.status !== 'cancelled'); // filter deleted events
 }
 
 function getContactsConections({ labelId }) {
@@ -130,89 +157,80 @@ function getContactsEvents({ labelId, types }) {
 }
 
 function getContactEvents(connection) {
-  const contactName = connection.names?.[0].displayName;
-  if (!contactName) {
+  const contact = {
+    resourceName: connection.resourceName,
+    name: connection.names?.[0].displayName
+  };
+  if (!contact.name) {
     console.warn("skip connection without name");
     return [];
   }
 
-  const contact = {
-    resourceName: connection.resourceName,
-    name: contactName,
-  };
-
+  const contactEventTypes = new Set(); 
   const events = [];
 
-  // Gather Birthday
-  {
+  const birthday = connection.birthdays?.[0]
+  if (birthday) {
     if(connection.birthdays?.length > 1){
-      console.error(`Ambigous birthday from ${contactName}`)
+      console.warn(`Ambigous birthday from ${contactName}`);
     }
-
-    const birthday = connection.birthdays?.[0]
-    if (birthday) {
-      let summary = `${contactName}'s Birthday`;
-      if (birthday.date.year) {
-        summary += ` (${birthday.date.year})`;
-      }
-      const event = {
-        type: "birthday",
-        summary,
-        date: birthday.date,
-        contact,
-      };
-      event.id = buildContactEventId(event);
-      events.push(event);
-    }
-  }
-
-  // Gather Special Events
-  {
-    const eventTypes = new Set();
-    connection.events?.forEach((connectionEvent) => {
-      const eventLabel = connectionEvent.formattedType;
-      if (!eventLabel) {
-        console.warn(`skip event without label from ${contactName}`);
-        return;
-      }
-
-      if(eventTypes.has(eventLabel)) {
-        console.warn(`skip ambigous ${eventLabel} from ${contactName}`);
-        return;
-      }
-      eventTypes.add(eventLabel);
-
-      let summary = `${contactName}'s ${eventLabel}`;
-      if(connectionEvent.date.year){
-        summary += ` (${connectionEvent.date.year})`;
-      }
-      const event = {
-        type: eventLabel,
-        summary,
-        date: connectionEvent.date,
-        contact,
-      };
-      event.id = buildContactEventId(event);
-      events.push(event);
+    events.push({
+      type: ContactsEventLocalization.birthday,
+      date: birthday.date,
     });
   }
+  
+  // Special Events
+  connection.events?.forEach((connectionEvent) => {
+    const eventLabel = connectionEvent.formattedType;
+    if (!eventLabel) {
+      console.warn(`skip event without label from ${contactName}`);
+      return;
+    }
 
-  return events;
+    if(contactEventTypes.has(eventLabel)) {
+      console.warn(`skip ambigous ${eventLabel} from ${contactName}`);
+      return;
+    }
+    contactEventTypes.add(eventLabel);
 
-  function buildContactEventId({contact, type, date}) {
-    const value = `${contact.resourceName}-${type}-${date.year ?? '0000'}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+    events.push({
+      type: eventLabel,
+      date: connectionEvent.date,
+    });
+  });
+
+  // enrich event
+  events.forEach((event) => {
+    event.contact = contact;
+    event.id = buildContactEventId(event.type, event.contact.resourceName); 
+ 
+    event.summary = `${event.contact.name}'s ${event.type}`
+    if(event.date.year){
+      event.summary += ` (${event.date.year})`;
+    }
+  })
+
+  return events
+
+  function buildContactEventId(type, resourceName) {
+    const value = `${resourceName}-${type}`;
     const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, value);
     return Utilities.base64EncodeWebSafe(digest).replace(/=+$/,'')
   }
 }
 
 function createOrUpdateCalendarEventFromContactEvent(calendarId, contactEvent) {
-  // TODO handle no year, use contact creation date
-  const contactEventDate = new Date(`${contactEvent.date.year ?? 1970}-${String(contactEvent.date.month).padStart(2, '0')}-${String(contactEvent.date.day).padStart(2, '0')}`);
+  // NOTE as of now (2025-01-01) there is no way to determine the creation date of the contact, therefore we use 1970 as the event start date
+  const contactEventDate = new Date([
+    contactEvent.date.year ?? 1970,
+    String(contactEvent.date.month).padStart(2, '0'),
+    String(contactEvent.date.day).padStart(2, '0'),
+  ].join('-'));
 
   const calendarEvent = {
     eventType: 'default',
-    summary: `★ ${contactEvent.summary}`,
+    summary: `${Config.calendar.eventSummaryPrefix ?? ''}${contactEvent.summary}`,
     start: { date: contactEventDate.toISOString().split("T")[0] },
     end: { date: nextDay(contactEventDate).toISOString().split("T")[0] },
     recurrence: [(contactEvent.date.month === 2 && contactEvent.date.day === 29)
