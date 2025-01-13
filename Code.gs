@@ -58,10 +58,11 @@ function getContactsEventLocalization(userLocale) {
     "en": { birthday: "Birthday", anniversary: "Anniversary" },
     "de": { birthday: "Geburtstag", anniversary: "Jahrestag" },
   }[userLocale];
-  if(!localization) {
-    throw new Error(`Unsupported localization '${userLocale}'.` +
-      `\nAdd localization entry for '${userLocale}' at \`function getContactsEventLocalization\` .`);
+  if(localization) {
+      return localization;
   };
+  throw new Error(`Unsupported localization '${userLocale}'.` +
+    `\nAdd localization entry for '${userLocale}' at \`function getContactsEventLocalization\` .`);
 }
 
 // --- main methods START ---
