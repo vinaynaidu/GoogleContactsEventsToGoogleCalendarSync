@@ -1,30 +1,34 @@
 // SOURCE: https://github.com/qoomon/GoogleContactsEventsToGoogleCalendarSync
 
-// # INSTRUCTION to sync birthdays and special events from your Google Contacts into any Google Calendar...
-// 1) Adjust the "const Config" object and the "const ContactsEventLocalization" function below before you proceed, click "Save project to Drive" above afterwards
-// 2) Run this script for the first time...
+// # INSTRUCTION Initial setup...
+// 1) Add People and Calendar service by clicking on the '+' icon next to 'Services' at the left pannel.
+
+// # INSTRUCTION Sync birthdays and special events from your Google Contacts into any Google Calendar...
+// 1) Adjust the "const ContactsEventLocalization = {...}" object and the "const Config = {...}" object below before you proceed.
+// 2) Click "Save project to Drive" above afterwards
+// 3) Run this script for the first time...
 //   1) Select "run_syncEvents" in the dropdown menu above, then click "Run"
 //.  2) Click 'Advanced' during warnings to proceed and grant permissions to this script to access your contacts and calanders.
-// 3) Create a "Trigger" to run "syncEvents" daily...
+// 4) Create a "Trigger" to run "syncEvents" daily...
 //   1) Click "Triggers" in the most left pannel
 //   2) Click "Add Trigger" Button at the bottom right
 //.  3) Select "run_syncEvents" for "Choose which function to run"
 //.  3) Select "Day Timer" for "Select type of time based trigger"
 //.  4) Click "Save" Button
 
-// # INSTRUCTION to remove all synced events...
+// # INSTRUCTION Remove all synced events...
 // 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
 
-const ContactsEventLocalization = (() => {
-  const en = { birthday: 'Birthday', anniversary: 'Anniversary' };
-  switch (Session.getActiveUserLocale()) {
-    case 'en': return en;
-    case 'de': return { birthday: 'Geburtstag', anniversary: 'Jahrestag' };
-    default:
-      throw new Error(`Unsupported user locale '${Session.getActiveUserLocale()}'.` +
-        `\nAdd \`case '${Session.getActiveUserLocale()}': return {...};\` to \`const ContactsEventLocalization\` function.`);
-  }
-})();
+const userLocale = getUserLocale();
+const ContactsEventLocalization = {
+  'en': { birthday: 'Birthday', anniversary: 'Anniversary' },
+  'de': { birthday: 'Geburtstag', anniversary: 'Jahrestag' },
+}[userLocale];
+if(!ContactsEventLocalization) {
+  throw new Error(`Unsupported localization '${userLocale}'.` +
+    `\nAdd localization entry for '${userLocale}' at \`const ContactsEventLocalization = {...};\` .`);
+};
+console.info('User Locale:', userLocale + ':', ContactsEventLocalization)
 
 const Config = {
   // --- Google Contacts ---
@@ -57,8 +61,8 @@ const Config = {
 
 // --- main methods START ---
 
-function run_debug() {
-  console.log('UserLocale:', Session.getActiveUserLocale());
+function run_debug(event) {
+  console.log('event:', JSON.stringify(event, null ,2));
 }
 
 function run_syncEvents() {
@@ -72,6 +76,8 @@ function run_syncEvents() {
     const calendarContactsEvents = getCalendarContactsEvents({
       calendarId: Config.calendar.id,
     });
+    // TODO handle event.status !== 'cancelled' (single instance events from recurring events, after edit single event)
+    //      update status to 'confirmed' or delete parent event
     console.info("Calendar Contact events count: " + calendarContactsEvents.length);
 
     // --- remove legacy calendar events ---
@@ -122,8 +128,7 @@ function getCalendarContactsEvents({ calendarId, privateExtendedProperties }) {
     result.push(...response.items);
   } while (nextPageToken);
 
-  return result
-    .filter((item) => item.status !== 'cancelled'); // filter deleted events
+  return result;
 }
 
 function getContactsConections({ labelId }) {
@@ -278,6 +283,20 @@ function createOrUpdateCalendarEventFromContactEvent(calendarId, contactEvent) {
 function removeCalendarEvent(calendarId, event) {
   console.info(`Remove '${event.summary}' on ${event.start.date}`);
   Calendar.Events.remove(calendarId, event.id);
+}
+
+function getUserLocale() {
+  let userLocale = Session.getActiveUserLocale();
+  if(userLocale) {
+    console.info(`Set user locale to '${userLocale}'.`);
+    PropertiesService.getUserProperties().setProperty('userLocale', userLocale);
+  } else {
+    userLocale = PropertiesService.getUserProperties().getProperty('userLocale');
+    if(!userLocale) {
+      throw new Error(`Could not determine user locale. Run this script manually once.`);
+    }
+  }
+  return userLocale;
 }
 
 function nextDay(date) {
