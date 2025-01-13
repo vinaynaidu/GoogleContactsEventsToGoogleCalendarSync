@@ -20,7 +20,7 @@
 // 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
 
 const userLocale = getUserLocale();
-const ContactsEventLocalization = getContactsEventLocalization(userLocale);
+const ContactsEventLocalization = getContactsEventLocalization_(userLocale);
 console.info("User Locale:", userLocale + ":", ContactsEventLocalization);
 
 const Config = {
@@ -53,16 +53,16 @@ const Config = {
 };
 Config.calendar.eventSummaryPrefix+= " "; // Always add a Thin Space (U+2009) for design purpose;
 
-function getContactsEventLocalization(userLocale) {
+function getContactsEventLocalization_(userLocale) {
   const localization =  {
     "en": { birthday: "Birthday", anniversary: "Anniversary" },
     "de": { birthday: "Geburtstag", anniversary: "Jahrestag" },
   }[userLocale];
-  if(localization) {
-      return localization;
-  };
-  throw new Error(`Unsupported localization '${userLocale}'.` +
+  if(!localization) {
+     throw new Error(`Unsupported localization '${userLocale}'.` +
     `\nAdd localization entry for '${userLocale}' at \`function getContactsEventLocalization\` .`);
+  }
+  return localization;
 }
 
 // --- main methods START ---
@@ -70,31 +70,49 @@ function getContactsEventLocalization(userLocale) {
 const CALENDAR_CONTACTS_EVENTS_SOURCE = "contacts";
 
 function run_debug(event) {
-  console.log("event:", JSON.stringify(event, null ,2));
+  console.log("Google Contacts group:", People.ContactGroups.get(`contactGroups/${Config.contacts.labelId}`)?.formattedName);
+  console.log("Google Calendar:", Calendar.Calendars.get(Config.calendar.id)?.summary);
 }
 
 function run_syncEvents() {
   try {
+    const calendarName = Calendar.Calendars.get(Config.calendar.id).summary;
+    if(Config.contacts.labelId) {
+      const contactGroupName = People.ContactGroups.get(`contactGroups/${Config.contacts.labelId}`).formattedName;
+      console.info(`Sync contacts events from contacts group '${contactGroupName}' to Google Calendar '${calendarName}'`);
+    } else {
+      console.info(`Sync ALL contacts events to Google Calendar '${calendarName}'`);
+    }
+    
     const contactsEvents = getContactsEvents({
       types: Config.contacts.annualEventTypes,
       labelId: Config.contacts.labelId,
     });
-    console.info("Contacts events count: " + contactsEvents.length);
+    console.info("Contacts events: " + contactsEvents.length);
 
     const calendarContactsEvents = getCalendarContactsEvents({
       calendarId: Config.calendar.id,
     });
-    // TODO handle event.status !== "cancelled" (single instance events from recurring events, after edit single event)
-    //      update status to "confirmed" or delete parent event
-    console.info("Calendar Contact events count: " + calendarContactsEvents.length);
+    console.info("Calendar contacts events: " + calendarContactsEvents.length);
 
-    // --- remove legacy calendar events ---
+    // --- remove calendar events ---
     const contactsEventIdSet = new Set(contactsEvents.map((event) => event.id));
-    const calendarContactsEventsToDelete = calendarContactsEvents.filter((event) => !contactsEventIdSet.has(event.extendedProperties.private.contactEventId));
-    console.info("Calendar Contact events to delete: " + calendarContactsEventsToDelete.length);
-    calendarContactsEventsToDelete.forEach((calendarEvent) => {
-      removeCalendarEvent(Config.calendar.id, calendarEvent);
-    });
+    const calendarContactsEventsMap = Object.fromEntries(calendarContactsEvents.map((event) => [event.id, event]));
+    calendarContactsEvents.forEach((event) => {
+      if(event.recurringEventId) {
+        const recurringEvent = calendarContactsEventsMap[event.recurringEventId];
+        if(recurringEvent) {
+          console.debug("Remove calendar event because it has been modified manually");
+          removeCalendarEvent(Config.calendar.id, recurringEvent);
+          delete calendarContactsEventsMap[event.recurringEventId]
+          delete calendarContactsEventsMap[event.id]
+        }
+      } else if(!contactsEventIdSet.has(event.extendedProperties.private.contactEventId)) {
+        console.debug("Remove calendar event because contact event has been deleted");
+        removeCalendarEvent(Config.calendar.id, event);
+        delete calendarContactsEventsMap[event.id]
+      }
+    })
 
     // --- create or update calendar events ---
     contactsEvents.forEach((contactEvent) => {
@@ -106,14 +124,21 @@ function run_syncEvents() {
 }
 
 function run_removeEvents() {
-  const events = getCalendarContactsEvents({
-    calendarId: Config.calendar.id,
-  });
-  console.info("events: ", events.length);
+  try {
+    const calendarName = Calendar.Calendars.get(Config.calendar.id).summary;
+    console.info(`Remove all contacts events from Google Calendar '${calendarName}'`);
 
-  events.forEach((event) => {
-    removeCalendarEvent(Config.calendar.id, event);
-  });
+    const calendarContactsEvents = getCalendarContactsEvents({
+      calendarId: Config.calendar.id,
+    }).filter((event) => event.status === 'confirmed');
+    console.info("Calendar contacts events count: " + calendarContactsEvents.length);
+
+    calendarContactsEvents.forEach((event) => {
+      removeCalendarEvent(Config.calendar.id, event);
+    });
+  } catch (error) {
+    console.error("ERROR", error.stack);
+  }
 }
 
 // --- main methods END ---
@@ -288,7 +313,7 @@ function createOrUpdateCalendarEventFromContactEvent(calendarId, contactEvent) {
 }
 
 function removeCalendarEvent(calendarId, event) {
-  console.info(`Remove '${event.summary}' on ${event.start.date}`);
+  console.info(`Remove '${event.summary}' on ${event.start?.date}`);
   Calendar.Events.remove(calendarId, event.id);
 }
 
