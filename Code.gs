@@ -4,7 +4,7 @@
 // 1) Add People and Calendar service by clicking on the "+"" icon next to "Services" at the left pannel.
 
 // # INSTRUCTION Sync birthdays and special events from your Google Contacts into any Google Calendar...
-// 1) Adjust the "const ContactsEventLocalization = {...}" object and the "const Config = {...}" object below before you proceed.
+// 1) Adjust the "getContactsEventLocalization" funtion and the "const Config = {...}" object below before you proceed.
 // 2) Click "Save project to Drive" above afterwards
 // 3) Run this script for the first time...
 //   1) Select "run_syncEvents" in the dropdown menu above, then click "Run"
@@ -20,14 +20,7 @@
 // 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
 
 const userLocale = getUserLocale();
-const ContactsEventLocalization = {
-  "en": { birthday: "Birthday", anniversary: "Anniversary" },
-  "de": { birthday: "Geburtstag", anniversary: "Jahrestag" },
-}[userLocale];
-if(!ContactsEventLocalization) {
-  throw new Error(`Unsupported localization '${userLocale}'.` +
-    `\nAdd localization entry for '${userLocale}' at \`const ContactsEventLocalization = {...};\` .`);
-};
+const ContactsEventLocalization = getContactsEventLocalization(userLocale);
 console.info("User Locale:", userLocale + ":", ContactsEventLocalization);
 
 const Config = {
@@ -59,6 +52,17 @@ const Config = {
   },
 };
 Config.calendar.eventSummaryPrefix+= " "; // Always add a Thin Space (U+2009) for design purpose;
+
+function getContactsEventLocalization(userLocale) {
+  const localization =  {
+    "en": { birthday: "Birthday", anniversary: "Anniversary" },
+    "de": { birthday: "Geburtstag", anniversary: "Jahrestag" },
+  }[userLocale];
+  if(!localization) {
+    throw new Error(`Unsupported localization '${userLocale}'.` +
+      `\nAdd localization entry for '${userLocale}' at \`function getContactsEventLocalization\` .`);
+  };
+}
 
 // --- main methods START ---
 
