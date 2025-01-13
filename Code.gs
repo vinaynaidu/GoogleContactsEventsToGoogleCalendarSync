@@ -55,7 +55,7 @@ const Config = {
     //   - Click on the 3 dot menu and then click on "Settings and sharing"
     //   - Sroll down to "Integrate calendar" > "Calendar ID"
     id: "CHANGE_ME@group.calendar.google.com",
-    eventSummaryPrefix: "❖ ", // "⌘  ", "❖  ", "✱  "
+    eventSummaryPrefix: "⌘ ", // ⌘, ❖, ✱, 
   },
 };
 Config.calendar.eventSummaryPrefix+= " "; // Always add a Thin Space (U+2009) for design purpose;
