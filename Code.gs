@@ -19,10 +19,9 @@
 // # INSTRUCTION Remove all synced events...
 // 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
 
-const userLocale = getUserLocale();
-const ContactsEventLocalization = getContactsEventLocalization_(userLocale);
-console.info("User Locale:", userLocale + ":", ContactsEventLocalization);
-
+// en: { birthday: "Birthday",   anniversary: "Anniversary" }
+// de: { birthday: "Geburtstag", anniversary: "Jahrestag" }
+const ContactsEventLocalization = { birthday: "Birthday", anniversary: "Anniversary" };
 const Config = {
   // --- Google Contacts ---
   contacts: {
@@ -52,18 +51,6 @@ const Config = {
   },
 };
 Config.calendar.eventSummaryPrefix+= " "; // Always add a Thin Space (U+2009) for design purpose;
-
-function getContactsEventLocalization_(userLocale) {
-  const localization =  {
-    "en": { birthday: "Birthday", anniversary: "Anniversary" },
-    "de": { birthday: "Geburtstag", anniversary: "Jahrestag" },
-  }[userLocale];
-  if(!localization) {
-     throw new Error(`Unsupported localization '${userLocale}'.` +
-    `\nAdd localization entry for '${userLocale}' at \`function getContactsEventLocalization\` .`);
-  }
-  return localization;
-}
 
 // --- main methods START ---
 
@@ -102,17 +89,17 @@ function run_syncEvents() {
       if(event.recurringEventId) {
         const recurringEvent = calendarContactsEventsMap[event.recurringEventId];
         if(recurringEvent) {
-          console.debug("Remove calendar event because it has been modified manually");
+          console.log("Remove calendar event because it has been modified manually");
           removeCalendarEvent(Config.calendar.id, recurringEvent);
           delete calendarContactsEventsMap[event.recurringEventId]
           delete calendarContactsEventsMap[event.id]
         }
       } else if(!contactsEventIdSet.has(event.extendedProperties.private.contactEventId)) {
-        console.debug("Remove calendar event because contact event has been deleted");
+        console.log("Remove calendar event because contact event has been deleted");
         removeCalendarEvent(Config.calendar.id, event);
         delete calendarContactsEventsMap[event.id]
       }
-    })
+    });
 
     // --- create or update calendar events ---
     contactsEvents.forEach((contactEvent) => {
@@ -315,20 +302,6 @@ function createOrUpdateCalendarEventFromContactEvent(calendarId, contactEvent) {
 function removeCalendarEvent(calendarId, event) {
   console.info(`Remove '${event.summary}' on ${event.start?.date}`);
   Calendar.Events.remove(calendarId, event.id);
-}
-
-function getUserLocale() {
-  let userLocale = Session.getActiveUserLocale();
-  if(userLocale) {
-    console.info(`Store user locale '${userLocale}'.`);
-    PropertiesService.getUserProperties().setProperty("userLocale", userLocale);
-  } else {
-    userLocale = PropertiesService.getUserProperties().getProperty("userLocale");
-    if(!userLocale) {
-      throw new Error("Could not determine user locale. Run this script manually once.");
-    }
-  }
-  return userLocale;
 }
 
 function nextDay(date) {
