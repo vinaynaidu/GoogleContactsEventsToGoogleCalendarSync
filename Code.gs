@@ -4,7 +4,7 @@
 // 1) Add People and Calendar service by clicking on the "+"" icon next to "Services" at the left pannel.
 
 // # INSTRUCTION Sync birthdays and special events from your Google Contacts into any Google Calendar...
-// 1) Adjust the "getContactsEventLocalization" funtion and the "const Config = {...}" object below before you proceed.
+// 1) Adjust the "ContactsEventLocalization" and the "Config" below before you proceed.
 // 2) Click "Save project to Drive" above afterwards
 // 3) Run this script for the first time...
 //   1) Select "run_syncEvents" in the dropdown menu above, then click "Run"
