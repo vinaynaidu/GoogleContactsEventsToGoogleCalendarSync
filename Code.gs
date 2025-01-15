@@ -50,7 +50,6 @@ const Config = {
     eventSummaryPrefix: "⌘ ", // ⌘, ❖, ✱, 
   },
 };
-Config.calendar.eventSummaryPrefix+= " "; // Always add a Thin Space (U+2009) for design purpose;
 
 // --- main methods START ---
 
