@@ -1,6 +1,6 @@
 # Google Contacts Events To Google Calendar Sync
 
-A [Google Scripts](https://script.google.com) sync Google Contacts events to any Google Calendar
+A [Google Scripts](https://script.google.com) to sync Google Contacts events to any Google Calendar
 
 ### Installation
 * Create a blank project on https://script.google.com/
