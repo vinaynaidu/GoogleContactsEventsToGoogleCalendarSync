@@ -1,4 +1,6 @@
 // SOURCE: https://github.com/qoomon/GoogleContactsEventsToGoogleCalendarSync
+// Version: 1.0.0
+// Author: qoomon
 
 // # INSTRUCTION Initial setup...
 // 1) Add People and Calendar service by clicking on the "+"" icon next to "Services" at the left pannel.
@@ -8,13 +10,13 @@
 // 2) Click "Save project to Drive" above afterwards
 // 3) Run this script for the first time...
 //   1) Select "run_syncEvents" in the dropdown menu above, then click "Run"
-//.  2) Click "Advanced" during warnings to proceed and grant permissions to this script to access your contacts and calanders.
+//   2) Click "Advanced" during warnings to proceed and grant permissions to this script to access your contacts and calanders.
 // 4) Create a "Trigger" to run "syncEvents" daily...
 //   1) Click "Triggers" in the most left pannel
 //   2) Click "Add Trigger" Button at the bottom right
-//.  3) Select "run_syncEvents" for "Choose which function to run"
-//.  3) Select "Day Timer" for "Select type of time based trigger"
-//.  4) Click "Save" Button
+//   3) Select "run_syncEvents" for "Choose which function to run"
+//   3) Select "Day Timer" for "Select type of time based trigger"
+//   4) Click "Save" Button
 
 // # INSTRUCTION Remove all synced events...
 // 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
