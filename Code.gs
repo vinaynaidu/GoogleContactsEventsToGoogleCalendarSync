@@ -1,5 +1,5 @@
 // SOURCE: https://github.com/qoomon/GoogleContactsEventsToGoogleCalendarSync
-// Version: 1.0.0
+// Version: 1.0.1
 // Author: qoomon
 
 // # INSTRUCTION Initial setup...
@@ -186,7 +186,7 @@ function getContactEvents(connection) {
     name: connection.names?.[0].displayName,
   };
   if (!contact.name) {
-    console.warn("skip connection without name");
+    console.warn("Skip connection without name");
     return [];
   }
 
@@ -198,30 +198,39 @@ function getContactEvents(connection) {
     if(connection.birthdays?.length > 1){
       console.warn(`Ambigous birthday from ${contact.name}`);
     }
-    events.push({
-      type: ContactsEventLocalization.birthday,
-      date: birthday.date,
-    });
+  
+    if (!birthday.date){
+      console.warn(`Skip birthday without date from ${contact.name}`);
+    } else {
+      events.push({
+        type: ContactsEventLocalization.birthday,
+        date: birthday.date,
+      });
+    }
   }
 
   // Special Events
   connection.events?.forEach((connectionEvent) => {
     const eventLabel = connectionEvent.formattedType;
     if (!eventLabel) {
-      console.warn(`skip event without label from ${contact.name}`);
+      console.warn(`Skip event without label from ${contact.name}`);
       return;
     }
 
     if(contactEventTypes.has(eventLabel)) {
-      console.warn(`skip ambigous ${eventLabel} from ${contact.name}`);
+      console.warn(`Skip ambigous ${eventLabel} from ${contact.name}`);
       return;
     }
     contactEventTypes.add(eventLabel);
 
-    events.push({
-      type: eventLabel,
-      date: connectionEvent.date,
-    });
+    if (!connectionEvent.date){
+      console.warn(`Skip ${eventLabel} without date from ${contact.name}`);
+    } else {
+      events.push({
+        type: eventLabel,
+        date: connectionEvent.date,
+      } );
+    }
   });
 
   // enrich event
