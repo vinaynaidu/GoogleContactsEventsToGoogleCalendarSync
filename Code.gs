@@ -1,5 +1,5 @@
 // SOURCE: https://github.com/qoomon/GoogleContactsEventsToGoogleCalendarSync
-// Version: 1.0.2
+// Version: 1.0.3
 // Author: qoomon
 
 // # INSTRUCTION Initial setup...
@@ -21,7 +21,7 @@
 // # INSTRUCTION Remove all synced events...
 // 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
 
-// en: { birthday: "Birthday",   anniversary: "Anniversary", formatOrdinal: formatOrdinal_en, }
+// en: { birthday: "birthday",   anniversary: "anniversary", formatOrdinal: formatOrdinal_en, }
 // de: { birthday: "Geburtstag", anniversary: "Jahrestag",   formatOrdinal: formatOrdinal_de, }
 const ContactsEventLocalization = { birthday: "Birthday", anniversary: "Anniversary" };
 
