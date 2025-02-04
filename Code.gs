@@ -324,7 +324,7 @@ function nextDay(date) {
 }
 
 
-const formatOrdinal_de(n) { 
+function formatOrdinal_de(n) { 
   return `${n}.`
 }
   
