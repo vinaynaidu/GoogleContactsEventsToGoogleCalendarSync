@@ -1,5 +1,5 @@
 // SOURCE: https://github.com/qoomon/GoogleContactsEventsToGoogleCalendarSync
-// Version: 1.0.1
+// Version: 1.0.2
 // Author: qoomon
 
 // # INSTRUCTION Initial setup...
@@ -21,9 +21,10 @@
 // # INSTRUCTION Remove all synced events...
 // 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
 
-// en: { birthday: "Birthday",   anniversary: "Anniversary" }
-// de: { birthday: "Geburtstag", anniversary: "Jahrestag" }
+// en: { birthday: "Birthday",   anniversary: "Anniversary", formatOrdinal: formatOrdinal_en, }
+// de: { birthday: "Geburtstag", anniversary: "Jahrestag",   formatOrdinal: formatOrdinal_de, }
 const ContactsEventLocalization = { birthday: "Birthday", anniversary: "Anniversary" };
+
 const Config = {
   // --- Google Contacts ---
   contacts: {
@@ -239,8 +240,10 @@ function getContactEvents(connection) {
     event.id = buildContactEventId(event.type, event.contact.resourceName);
 
     event.summary = `${event.contact.name}'s ${event.type}`;
-    if(event.date.year){
-      event.summary += ` (${event.date.year})`;
+    if (event.date.year) {
+      const currentYear = new Date().getFullYear();
+      const age = currentYear - event.date.year;
+      event.summary += ` (${ContactsEventLocalization.formatOrdinal(age)})`;
     }
   });
 
@@ -318,4 +321,20 @@ function nextDay(date) {
   const nextDayDate = new Date(date);
   nextDayDate.setDate(date.getDate() + 1);
   return nextDayDate;
+}
+
+function formatOrdinal_de(n) { 
+  return `${n}.`
+}
+  
+function formatOrdinal_en(n) {
+  const ordinalRules = new Intl.PluralRules("en", { type: "ordinal" });
+  const suffixes = {
+    one: "st",
+    two: "nd",
+    few: "rd",
+    other: "th",
+  }
+  const rule = ordinalRules.select(n);
+  return `${n}${suffixes[rule]}`;
 }
