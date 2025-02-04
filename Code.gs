@@ -6,7 +6,7 @@
 // 1) Add People and Calendar service by clicking on the "+"" icon next to "Services" at the left pannel.
 
 // # INSTRUCTION Sync birthdays and special events from your Google Contacts into any Google Calendar...
-// 1) Adjust the "USER_LANGUAGE" and the "Config" below before you proceed.
+// 1) Adjust the "ContactsEventLocalization" and the "Config" below before you proceed.
 // 2) Click "Save project to Drive" above afterwards
 // 3) Run this script for the first time...
 //   1) Select "run_syncEvents" in the dropdown menu above, then click "Run"
@@ -21,12 +21,9 @@
 // # INSTRUCTION Remove all synced events...
 // 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
 
-// User setting: Choose "en" for English or "de" for German
-const USER_LANGUAGE = "en"; // Change to "de" for German
-
-const ContactsEventLocalization = USER_LANGUAGE === "de"
-  ? { birthday: "Geburtstag", anniversary: "Jahrestag" }
-  : { birthday: "Birthday", anniversary: "Anniversary" };
+// en: { birthday: "Birthday",   anniversary: "Anniversary", formatOrdinal: formatOrdinal_en, }
+// de: { birthday: "Geburtstag", anniversary: "Jahrestag",   formatOrdinal: formatOrdinal_de, }
+const ContactsEventLocalization = { birthday: "Birthday", anniversary: "Anniversary" };
 
 const Config = {
   // --- Google Contacts ---
@@ -246,9 +243,7 @@ function getContactEvents(connection) {
     if (event.date.year) {
       const currentYear = new Date().getFullYear();
       const age = currentYear - event.date.year;
-
-      const suffix = USER_LANGUAGE === "de" ? "." : "th";
-      event.summary += ` (${age}${suffix})`;
+      event.summary += ` (${ContactsEventLocalization.formatOrdinal(age)})`;
     }
   });
 
@@ -326,4 +321,21 @@ function nextDay(date) {
   const nextDayDate = new Date(date);
   nextDayDate.setDate(date.getDate() + 1);
   return nextDayDate;
+}
+
+
+const formatOrdinal_de(n) { 
+  return `${n}.`
+}
+  
+function formatOrdinal_en(n) {
+  const ordinalRules = new Intl.PluralRules("en", { type: "ordinal" });
+  const suffixes = {
+    one: "st",
+    two: "nd",
+    few: "rd",
+    other: "th",
+  }
+  const rule = ordinalRules.select(n);
+  return `${n}${suffixes[rule]}`;
 }
