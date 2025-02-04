@@ -323,7 +323,6 @@ function nextDay(date) {
   return nextDayDate;
 }
 
-
 function formatOrdinal_de(n) { 
   return `${n}.`
 }
