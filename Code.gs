@@ -1,12 +1,12 @@
 // SOURCE: https://github.com/qoomon/GoogleContactsEventsToGoogleCalendarSync
-// Version: 1.0.1
+// Version: 1.0.2
 // Author: qoomon
 
 // # INSTRUCTION Initial setup...
 // 1) Add People and Calendar service by clicking on the "+"" icon next to "Services" at the left pannel.
 
 // # INSTRUCTION Sync birthdays and special events from your Google Contacts into any Google Calendar...
-// 1) Adjust the "ContactsEventLocalization" and the "Config" below before you proceed.
+// 1) Adjust the "USER_LANGUAGE" and the "Config" below before you proceed.
 // 2) Click "Save project to Drive" above afterwards
 // 3) Run this script for the first time...
 //   1) Select "run_syncEvents" in the dropdown menu above, then click "Run"
@@ -21,9 +21,13 @@
 // # INSTRUCTION Remove all synced events...
 // 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
 
-// en: { birthday: "Birthday",   anniversary: "Anniversary" }
-// de: { birthday: "Geburtstag", anniversary: "Jahrestag" }
-const ContactsEventLocalization = { birthday: "Birthday", anniversary: "Anniversary" };
+// User setting: Choose "en" for English or "de" for German
+const USER_LANGUAGE = "en"; // Change to "de" for German
+
+const ContactsEventLocalization = USER_LANGUAGE === "de"
+  ? { birthday: "Geburtstag", anniversary: "Jahrestag" }
+  : { birthday: "Birthday", anniversary: "Anniversary" };
+
 const Config = {
   // --- Google Contacts ---
   contacts: {
@@ -239,8 +243,12 @@ function getContactEvents(connection) {
     event.id = buildContactEventId(event.type, event.contact.resourceName);
 
     event.summary = `${event.contact.name}'s ${event.type}`;
-    if(event.date.year){
-      event.summary += ` (${event.date.year})`;
+    if (event.date.year) {
+      const currentYear = new Date().getFullYear();
+      const age = currentYear - event.date.year;
+
+      const suffix = USER_LANGUAGE === "de" ? "." : "th";
+      event.summary += ` (${age}${suffix})`;
     }
   });
 
