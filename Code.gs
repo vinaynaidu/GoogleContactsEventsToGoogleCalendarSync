@@ -21,8 +21,8 @@
 // # INSTRUCTION Remove all synced events...
 // 1) Select "run_removeEvents" in the dropdown menu above, then click "Run"
 
-// en: { birthday: "birthday",   anniversary: "anniversary", formatOrdinal: formatOrdinal_en, }
-// de: { birthday: "Geburtstag", anniversary: "Jahrestag",   formatOrdinal: formatOrdinal_de, }
+// en: { birthday: "birthday",   anniversary: "anniversary", formatOrdinal: formatOrdinal_en }
+// de: { birthday: "Geburtstag", anniversary: "Jahrestag",   formatOrdinal: formatOrdinal_de }
 const ContactsEventLocalization = { birthday: "Birthday", anniversary: "Anniversary" };
 
 const Config = {
