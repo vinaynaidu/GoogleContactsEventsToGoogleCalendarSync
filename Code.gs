@@ -1,6 +1,6 @@
 // SOURCE: https://github.com/qoomon/GoogleContactsEventsToGoogleCalendarSync
-// Version: 1.0.3
-// Author: qoomon
+// Version: 1.0.4
+// Author: Vinay Naidu, original: qoomon
 
 // # INSTRUCTION Initial setup...
 // 1) Add People and Calendar service by clicking on the "+"" icon next to "Services" at the left pannel.
@@ -28,13 +28,13 @@ const ContactsEventLocalization = { birthday: "Birthday", anniversary: "Annivers
 const Config = {
   // --- Google Contacts ---
   contacts: {
-    // If undefined all contacts are synced
+    // If 'all' all contacts are synced
     // If set only contacts with that label are synced
     //   To get the contactsLabelId...
     //   - Open https://contacts.google.com/
     //   - Click on any contact label on the left pannel,
     //     the last part of the url address is the contactsLabelId (https://contacts.google.com/label/[contactsLabelId]?...)
-    labelId: "CHANGE_ME",
+    labelId: undefined, // can be 'all' as well
     // Only those contact event types are synced. Add custom labels if needed.
     annualEventTypes: [
       ContactsEventLocalization.birthday,
@@ -49,7 +49,7 @@ const Config = {
     //   - Hover over any of your calenders you have write premissions
     //   - Click on the 3 dot menu and then click on "Settings and sharing"
     //   - Sroll down to "Integrate calendar" > "Calendar ID"
-    id: "CHANGE_ME@group.calendar.google.com",
+    id: "vinaynaidu.uk@gmail.com",
     eventSummaryPrefix: "⌘ ", // ⌘, ❖, ✱, 
   },
 };
@@ -59,13 +59,19 @@ const Config = {
 const CALENDAR_CONTACTS_EVENTS_SOURCE = "contacts";
 
 function run_debug(event) {
-  console.log("Google Contacts group:", People.ContactGroups.get(`contactGroups/${Config.contacts.labelId}`)?.formattedName);
+  if(Config.contacts.labelId) {
+    console.log("Google Contacts group:", People.ContactGroups.get(`contactGroups/${Config.contacts.labelId}`)?.formattedName);
+  } else {
+    console.log("Google Contacts group:", People.ContactGroups.get(`contactGroups/all`)?.formattedName);
+  }
+
   console.log("Google Calendar:", Calendar.Calendars.get(Config.calendar.id)?.summary);
 }
 
 function run_syncEvents() {
   try {
     const calendarName = Calendar.Calendars.get(Config.calendar.id).summary;
+
     if(Config.contacts.labelId) {
       const contactGroupName = People.ContactGroups.get(`contactGroups/${Config.contacts.labelId}`).formattedName;
       console.info(`Sync contacts events from contacts group '${contactGroupName}' to Google Calendar '${calendarName}'`);
@@ -77,6 +83,7 @@ function run_syncEvents() {
       types: Config.contacts.annualEventTypes,
       labelId: Config.contacts.labelId,
     });
+
     console.info("Contacts events: " + contactsEvents.length);
 
     const calendarContactsEvents = getCalendarContactsEvents({
@@ -243,7 +250,7 @@ function getContactEvents(connection) {
     if (event.date.year) {
       const currentYear = new Date().getFullYear();
       const age = currentYear - event.date.year;
-      event.summary += ` (${ContactsEventLocalization.formatOrdinal(age)})`;
+      event.summary += ` (${age})`;
     }
   });
 
